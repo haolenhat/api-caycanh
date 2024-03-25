@@ -1,5 +1,4 @@
 const express = require("express");
-
 const app = express();
 
 require("dotenv").config();
@@ -7,148 +6,105 @@ require("dotenv").config();
 app.use(express.json());
 
 const connectDB = require("./connectMongo");
-
 connectDB();
 
-const BookModel = require("./models/book.model");
-const redis = require('./redis')
+const Movie = require('./models/Trees.model');
+const User = require('./models/Users.model');
+const redis = require('./redis');
 
-const deleteKeys = async (pattern) => {
-  const keys = await redis.keys(`${pattern}::*`)
-  console.log(keys)
-  if (keys.length > 0) {
-    redis.del(keys)
-  }
-}
+// Tree
 
-app.get("/api/v1/books", async (req, res) => {
-  const { limit = 5, orderBy = "name", sortBy = "asc", keyword } = req.query;
-  let page = +req.query?.page;
-
-  if (!page || page <= 0) page = 1;
-
-  const skip = (page - 1) * + limit;
-
-  const query = {};
-
-  if (keyword) query.name = { $regex: keyword, $options: "i" };
-
-  const key = `Book::${JSON.stringify({query, page, limit, orderBy, sortBy})}`
-  let response = null
+app.get('/api/movies', async (req, res) => {
   try {
-    const cache = await redis.get(key)
-    if (cache) {
-      response = JSON.parse(cache)
-    } else {
-      const data = await BookModel.find(query)
-      .skip(skip)
-      .limit(limit)
-      .sort({ [orderBy]: sortBy });
-      const totalItems = await BookModel.countDocuments(query);
+    const movies = await Movie.find();
+    res.json(movies);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
-      response = {
-        msg: "Ok",
-        data,
-        totalItems,
-        totalPages: Math.ceil(totalItems / limit),
-        limit: +limit,
-        currentPage: page,
-      }
+app.post('/api/addmovies', async (req, res) => {
+  try {
+    const newMovie = new Movie(req.body);
+    const savedMovie = await newMovie.save();
+    res.json(savedMovie);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
-      redis.setex(key, 600, JSON.stringify(response))
+app.put('/api/movies/:id', async (req, res) => {
+  try {
+    const updatedMovie = await Movie.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updatedMovie);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.delete('/api/movies/:id', async (req, res) => {
+  try {
+    const deletedMovie = await Movie.findByIdAndDelete(req.params.id);
+    if (!deletedMovie) {
+      return res.status(404).json({ error: 'Movie not found' });
     }
-    
-    return res.status(200).json(response);
+    res.json(deletedMovie);
   } catch (error) {
-    return res.status(500).json({
-      msg: error.message,
-    });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-app.get("/api/v1/books/:id", async (req, res) => {
+
+// User
+
+app.get('/api/users', async (req, res) => {
   try {
-    const data = await BookModel.findById(req.params.id);
-
-    if (data) {
-      return res.status(200).json({
-        msg: "Ok",
-        data,
-      });
-    }
-
-    return res.status(404).json({
-      msg: "Not Found",
-    });
+    const users = await User.find();
+    res.json(users);
   } catch (error) {
-    return res.status(500).json({
-      msg: error.message,
-    });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-app.post("/api/v1/books", async (req, res) => {
+app.post('/api/register', async (req, res) => {
   try {
-    const { name, author, price, description } = req.body;
-    const book = new BookModel({
-      name,
-      author,
-      price,
-      description,
-    });
-    const data = await book.save();
-    deleteKeys('Book')
-    return res.status(200).json({
-      msg: "Ok",
-      data,
-    });
+    const newUser = new User(req.body);
+    const savedUser = await newUser.save();
+    res.json(savedUser);
   } catch (error) {
-    return res.status(500).json({
-      msg: error.message,
-    });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-app.put("/api/v1/books/:id", async (req, res) => {
+app.delete('/api/users/:id', async (req, res) => {
   try {
-    const { name, author, price, description } = req.body;
-    const { id } = req.params;
-
-    const data = await BookModel.findByIdAndUpdate(
-      id,
-      {
-        name,
-        author,
-        price,
-        description,
-      },
-      { new: true }
-    );
-    deleteKeys('Book')
-    return res.status(200).json({
-      msg: "Ok",
-      data,
-    });
+    const deletedUser = await User.findByIdAndDelete(req.params.id);
+    res.json(deletedUser);
   } catch (error) {
-    return res.status(500).json({
-      msg: error.message,
-    });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-app.delete("/api/v1/books/:id", async (req, res) => {
+app.put('/api/users/:id', async (req, res) => {
   try {
-    await BookModel.findByIdAndDelete(req.params.id);
-    deleteKeys('Book')
-    return res.status(200).json({
-      msg: "Ok",
-    });
+    const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updatedUser);
   } catch (error) {
-    return res.status(500).json({
-      msg: error.message,
-    });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+app.get('/api/users/:email', async (req, res) => {
+  try {
+    const foundUser = await User.findOne({ email: req.params.email });
+    res.json(foundUser);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+
+
 
 const PORT = process.env.PORT;
 
