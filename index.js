@@ -14,7 +14,7 @@ const redis = require('./redis');
 
 // Tree
 
-app.get('/api/movies', async (req, res) => {
+app.get('/api/tree', async (req, res) => {
   try {
     const movies = await Movie.find();
     res.json(movies);
@@ -23,7 +23,7 @@ app.get('/api/movies', async (req, res) => {
   }
 });
 
-app.post('/api/addmovies', async (req, res) => {
+app.post('/api/addtree', async (req, res) => {
   try {
     const newMovie = new Movie(req.body);
     const savedMovie = await newMovie.save();
@@ -33,7 +33,7 @@ app.post('/api/addmovies', async (req, res) => {
   }
 });
 
-app.put('/api/movies/:id', async (req, res) => {
+app.put('/api/tree/:id', async (req, res) => {
   try {
     const updatedMovie = await Movie.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(updatedMovie);
@@ -42,7 +42,7 @@ app.put('/api/movies/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/movies/:id', async (req, res) => {
+app.delete('/api/tree/:id', async (req, res) => {
   try {
     const deletedMovie = await Movie.findByIdAndDelete(req.params.id);
     if (!deletedMovie) {
