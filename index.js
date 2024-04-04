@@ -29,6 +29,21 @@ app.get('/api/info', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+//api tìm theo SDT
+app.get('/api/info/:phone', async (req, res) => {
+  try {
+    const phone = req.params.phone;
+    const infoUser = await InfoUser.findOne({ phone: phone });
+
+    if (!infoUser) {
+      return res.status(404).json({ error: 'Không tìm thấy thông tin người dùng cho số điện thoại đã nhập.' });
+    }
+
+    res.json(infoUser);
+  } catch (error) {
+    res.status(500).json({ error: 'Lỗi máy chủ nội bộ' });
+  }
+});
 
 // API thêm thông tin mới vào InfoUser
 app.post('/api/info', async (req, res) => {
