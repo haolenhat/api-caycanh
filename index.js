@@ -1,17 +1,16 @@
 const express = require("express");
 const app = express();
-
 require("dotenv").config();
-
-app.use(express.json());
 
 const connectDB = require("./connectMongo");
 connectDB();
 
+const InfoUser = require('./models/infoUser.model'); // Import model InfoUser
 const Movie = require('./models/Trees.model');
 const User = require('./models/Users.model');
 const redis = require('./redis');
 
+app.use(express.json());
 
 app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
@@ -21,9 +20,28 @@ app.use(function (req, res, next) {
   next();
 });
 
+// API lấy tất cả thông tin InfoUser
+app.get('/api/info', async (req, res) => {
+  try {
+    const infoUsers = await InfoUser.find();
+    res.json(infoUsers);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// API thêm thông tin mới vào InfoUser
+app.post('/api/info', async (req, res) => {
+  try {
+    const newInfoUser = new InfoUser(req.body);
+    const savedInfoUser = await newInfoUser.save();
+    res.json(savedInfoUser);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 // Tree
-
 app.get('/api/tree', async (req, res) => {
   try {
     const movies = await Movie.find();
@@ -64,9 +82,7 @@ app.delete('/api/tree/:id', async (req, res) => {
   }
 });
 
-
 // User
-
 app.get('/api/users', async (req, res) => {
   try {
     const users = await User.find();
@@ -113,11 +129,7 @@ app.get('/api/users/:email', async (req, res) => {
   }
 });
 
-
-
-
-const PORT = process.env.PORT;
-
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Server is running on port " + PORT);
 });
