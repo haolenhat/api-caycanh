@@ -12,17 +12,26 @@ const redis = require('./redis');
 
 app.use(express.json());
 
+// app.use(function (req, res, next) {
+//   const allowedOrigins = ['https://webcaycanh.netlify.app']; // Only one variation of the origin should be included
+//   const origin = req.headers.origin;
+//   if (allowedOrigins.includes(origin)) {
+//     res.setHeader('Access-Control-Allow-Origin', origin);
+//   }
+//   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+//   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+//   res.setHeader('Access-Control-Allow-Credentials', true);
+//   next();
+// });
+//edit
 app.use(function (req, res, next) {
-  const allowedOrigins = ['https://webcaycanh.netlify.app']; // Only one variation of the origin should be included
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
   res.setHeader('Access-Control-Allow-Credentials', true);
   next();
 });
+
 
 
 // API lấy tất cả thông tin InfoUser
